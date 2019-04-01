@@ -100,28 +100,39 @@ taking effect.
 FINDING YOUR DEVICE ID AND LOCAL KEY
 ------------------------------------
 
-If you have an Android device that supports Mass Storage mode, you can easily find these properties using the below 
-instructions. If you don't, there are some alternate methods at 
-[codetheweb/tuyapi](https://github.com/codetheweb/tuyapi/blob/master/docs/SETUP.md) (you're looking for the `uuid` and
-`localKey` values).
+You can use an Android phone and two apps (the Goldair app and a Package Capture app) to identify your Goldair Tuya based heater(s) uuid and local key. The steps are:   
 
 1. Download the [Goldair app from the Play Store](https://play.google.com/store/apps/details?id=com.goldair.smart).
 2. Follow the instructions in the app to set up the heater. Don't agonise over the name because you'll be giving it a 
-   new one in HA, but do remember it because you'll use this name to find the keys later.
-3. Once this is done and you've verified that you can control the heater from your phone, close the app and plug your 
-   phone into a computer in Mass Storage mode (choose the option to browse files). 
-    * ℹ Alternatively you can use an Android file browser, but bear in mind you will need to search through a large log
-        file
-4. Browse your phone's filesystem to find `/Android/data/com.goldair.smart/cache/1.abj` and open it in a text editor 
-   that can handle large files.
-5. Search for your device in this file by the name you gave it earlier. You're looking for a very long line that 
-   contains not only the device name, but also `uuid` and `localKey` properties. 
-    * ℹ If you've been using the app a while and have added this device more than once, you need to find the last 
-        occurrence of this kind of line for your device in the log file
-6. Copy the value of `uuid` (eg: 1234567890abcdef1234) to `device_id`, and the value of `localKey` 
-   (eg: 1234567890abcdef) to `local_key` in your `configuration.yaml` file.
+   new one in HA.
+3. Once this is done and you've verified that you can control the heater from your phone, close the Goldair app.
+4. Return to the Play Store on your phone, and download the "Package Capture" app (https://play.google.com/store/apps/details?id=app.greyshirts.sslcapture) and then install it. 
+5. When you first open the app it will ask you to install a certificate, this is needed for it to work, so agree to install it.
+6. In the top bar of the app there are two "Play" symbols. The one with a 1 allows you to capture packets from certain apps.
+7. Click on the '1' play symbol, scroll down the list of apps and select "Goldair" app from the list.
+8. A popup message will appear about setting up a vpn, so agree to this, and the app will then start capturing packets.
+9. Leaving the Package Capture app running on your phone, next open the Goldair app. On the openeing screen showing "All Devices" pull down the screen to cause a refresh. You can do this once or twice if you wish, but once should be enough. 
+10. Go back to the Packet Capture app and hit the Stop button at the top.
+11. You should now have an entry below listing an x number of captures.Tap that entry to open it. 
+12. Next look at the list of packets and open one of the packets in the list that is marked as "SSL". If you refreshed the screen once or twice you should have only a couple of SSL related packets in the list. 
+13. In the opened packet, scroll down through the first few blocks and you should see a large JSON block. This contains a lot of code. Scroll through it looking for an `uuid` entry. There should be one for each heater that you have (if you have more than one). Copy the unique 'uuid' code for each device. If you have more than one heater, remember to write down which heater the uuid code is for. 
+14. Continue to scroll throught the large JSON block and look for a few lines like the ones below:
 
-Repeat for as many heaters as you have to set up.
+"devAttribute": 0
+"name": Smart Socket 4"
+"timezoneId": "Europe/London"
+"localKey": "XXXXXXXXXXXXXXX"
+
+There should be one for each heater that you have (if you have more than one). Copy the unique 'uuid' code for each device. If you have more than one heater, remember to write down which device the localkey code is for. 
+
+15. Copy the value of `uuid` (eg: 1234567890abcdef1234) to `device_id`, and the value of `localKey` 
+   (eg: 1234567890abcdef) to `local_key` in your `configuration.yaml` file. If you have more than one heater, you will need more than one entry for the Goldair_heater component. 
+
+Repeat steps 13 and 14 looking for the 'uuid' and "localkey" in the JSON block for as many heaters as you have to set up.
+
+An alternate method is at
+[codetheweb/tuyapi](https://github.com/codetheweb/tuyapi/blob/master/docs/SETUP.md) (you're looking for the `uuid` and
+`localKey` values).
 
 NEXT STEPS
 ----------
