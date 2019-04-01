@@ -107,13 +107,13 @@ def setup(hass, config):
         hass.data[DOMAIN][host] = device
 
         if device_config.get('climate'):
-            load_platform(hass, 'climate', DOMAIN, {'host': host})
+            load_platform(hass, 'climate', DOMAIN, {'host': host}, config)
         if device_config.get('sensor'):
-            load_platform(hass, 'sensor', DOMAIN, {'host': host})
+            load_platform(hass, 'sensor', DOMAIN, {'host': host}, config)
         if device_config.get('display_light'):
-            load_platform(hass, 'light', DOMAIN, {'host': host})
+            load_platform(hass, 'light', DOMAIN, {'host': host}, config)
         if device_config.get('child_lock'):
-            load_platform(hass, 'lock', DOMAIN, {'host': host})
+            load_platform(hass, 'lock', DOMAIN, {'host': host}, config)
 
     return True
 
