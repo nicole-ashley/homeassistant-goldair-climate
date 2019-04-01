@@ -13,7 +13,7 @@ import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
 from homeassistant.const import (CONF_NAME, CONF_HOST, ATTR_TEMPERATURE, TEMP_CELSIUS)
-from homeassistant.components.climate import ATTR_OPERATION_MODE
+from homeassistant.components.climate.const import ATTR_OPERATION_MODE
 from homeassistant.helpers.discovery import load_platform
 
 REQUIREMENTS = ['pytuya==7.0']
