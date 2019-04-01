@@ -2,11 +2,13 @@
 Platform to control Goldair WiFi-connected heaters and panels.
 """
 from homeassistant.components.climate import (
-    ClimateDevice,
-    ATTR_OPERATION_MODE, ATTR_TEMPERATURE,
+    ClimateDevice)
+
+from homeassistant.components.climate.const import (
+    ATTR_OPERATION_MODE,
     SUPPORT_ON_OFF, SUPPORT_TARGET_TEMPERATURE, SUPPORT_OPERATION_MODE, SUPPORT_SWING_MODE
 )
-from homeassistant.const import STATE_UNAVAILABLE
+from homeassistant.const import (STATE_UNAVAILABLE, ATTR_TEMPERATURE)
 import custom_components.goldair_heater as goldair_heater
 
 SUPPORT_FLAGS = SUPPORT_ON_OFF | SUPPORT_TARGET_TEMPERATURE | SUPPORT_OPERATION_MODE | SUPPORT_SWING_MODE
