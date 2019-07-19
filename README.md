@@ -123,7 +123,7 @@ You can use an Android phone and two apps (the Goldair app and a Package Capture
 "timezoneId": "Europe/London"
 "localKey": "XXXXXXXXXXXXXXX"
 
-There should be one for each heater that you have (if you have more than one). Copy the unique 'uuid' code for each device. If you have more than one heater, remember to write down which device the localkey code is for. 
+There should be one for each heater that you have (if you have more than one). Copy the unique 'localKey' code for each device. If you have more than one heater, remember to write down which device the localkey code is for. 
 
 15. Copy the value of `uuid` (eg: 1234567890abcdef1234) to `device_id`, and the value of `localKey` 
    (eg: 1234567890abcdef) to `local_key` in your `configuration.yaml` file. If you have more than one heater, you will need more than one entry for the Goldair_heater component. 
