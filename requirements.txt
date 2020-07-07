@@ -1,2 +1,2 @@
-pycrypto~=2.6
-pytuya~=7.0
+pycryptodome~=3.9
+pytuya~=7.0.6

@@ -15,7 +15,6 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r requirements-first.txt
           pip install --pre -r requirements-dev.txt
       - name: isort
         run: isort --recursive --diff
