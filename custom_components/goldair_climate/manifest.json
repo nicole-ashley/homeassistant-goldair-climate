@@ -1,5 +1,6 @@
 {
   "domain": "goldair_climate",
+  "version": "0.1.3",
   "name": "Goldair WiFi climate devices",
   "documentation": "https://github.com/nikrolls/homeassistant-goldair-climate",
   "dependencies": [],
