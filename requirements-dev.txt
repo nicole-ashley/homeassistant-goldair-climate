@@ -1,4 +1,4 @@
-homeassistant~=0.110
+homeassistant~=2021.5
 pycryptodome~=3.9
 pytuya~=7.0
 pytest~=5.4
