@@ -1,6 +1,6 @@
 # Home Assistant Goldair WiFi Climate component
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge)](https://github.com/custom-components/hacs)
+[![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge)](https://github.com/hacs/integration)
 [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=nikrolls_homeassistant-goldair-climate&metric=reliability_rating)](https://sonarcloud.io/dashboard?id=nikrolls_homeassistant-goldair-climate)
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=nikrolls_homeassistant-goldair-climate&metric=security_rating)](https://sonarcloud.io/dashboard?id=nikrolls_homeassistant-goldair-climate)
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=nikrolls_homeassistant-goldair-climate&metric=sqale_rating)](https://sonarcloud.io/dashboard?id=nikrolls_homeassistant-goldair-climate)
