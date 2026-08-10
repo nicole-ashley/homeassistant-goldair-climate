@@ -13,7 +13,6 @@ _LOGGER = logging.getLogger(__name__)
 
 class ConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
-    CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_POLL
 
     async def async_step_user(self, user_input=None):
         errors = {}
@@ -62,13 +61,12 @@ class ConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     @staticmethod
     @callback
     def async_get_options_flow(config_entry):
-        return OptionsFlowHandler(config_entry)
+        return OptionsFlowHandler()
 
 
 class OptionsFlowHandler(config_entries.OptionsFlow):
-    def __init__(self, config_entry):
-        """Initialize options flow."""
-        self.config_entry = config_entry
+    # config_entry is provided by the base class as a read-only property; assigning
+    # it here (as this used to) raises on HA 2024.11+.
 
     async def async_step_init(self, user_input=None):
         if self.config_entry.data.get(config_entries.SOURCE_IMPORT, False):

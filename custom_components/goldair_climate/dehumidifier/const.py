@@ -1,3 +1,4 @@
+from homeassistant.components.climate import HVACMode
 from homeassistant.components.climate.const import (
     ATTR_FAN_MODE,
     ATTR_HUMIDITY,
@@ -5,8 +6,6 @@ from homeassistant.components.climate.const import (
     ATTR_PRESET_MODE,
     FAN_HIGH,
     FAN_LOW,
-    HVAC_MODE_DRY,
-    HVAC_MODE_OFF,
 )
 from homeassistant.const import ATTR_TEMPERATURE
 
@@ -40,7 +39,7 @@ PROPERTY_TO_DPS_ID = {
     ATTR_DEFROSTING: "105",
 }
 
-HVAC_MODE_TO_DPS_MODE = {HVAC_MODE_OFF: False, HVAC_MODE_DRY: True}
+HVAC_MODE_TO_DPS_MODE = {HVACMode.OFF: False, HVACMode.DRY: True}
 PRESET_MODE_TO_DPS_MODE = {
     PRESET_NORMAL: "0",
     PRESET_LOW: "1",

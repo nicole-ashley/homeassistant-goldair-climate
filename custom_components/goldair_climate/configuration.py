@@ -11,6 +11,7 @@ from .const import (
     CONF_TYPE_AUTO,
     CONF_TYPE_DEHUMIDIFIER,
     CONF_TYPE_FAN,
+    CONF_TYPE_GCT315_HEATER,
     CONF_TYPE_GECO_HEATER,
     CONF_TYPE_GPCV_HEATER,
     CONF_TYPE_GPPH_HEATER,
@@ -31,6 +32,7 @@ INDIVIDUAL_CONFIG_SCHEMA_TEMPLATE = [
                 CONF_TYPE_FAN,
                 CONF_TYPE_GECO_HEATER,
                 CONF_TYPE_GPCV_HEATER,
+                CONF_TYPE_GCT315_HEATER,
             ]
         ),
         "required": False,

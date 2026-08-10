@@ -1,6 +1,7 @@
 """
 Setup for different kinds of Goldair climate devices
 """
+
 import logging
 
 from . import DOMAIN
@@ -11,6 +12,7 @@ from .const import (
     CONF_TYPE_AUTO,
     CONF_TYPE_DEHUMIDIFIER,
     CONF_TYPE_FAN,
+    CONF_TYPE_GCT315_HEATER,
     CONF_TYPE_GECO_HEATER,
     CONF_TYPE_GPCV_HEATER,
     CONF_TYPE_GPPH_HEATER,
@@ -45,6 +47,8 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
         data[CONF_CHILD_LOCK] = GoldairGECOHeaterChildLock(device)
     elif discovery_info[CONF_TYPE] == CONF_TYPE_GPCV_HEATER:
         data[CONF_CHILD_LOCK] = GoldairGPCVHeaterChildLock(device)
+    elif discovery_info[CONF_TYPE] == CONF_TYPE_GCT315_HEATER:
+        raise ValueError("Goldair GCT315 Heaters do not support child lock.")
 
     if CONF_CHILD_LOCK in data:
         async_add_entities([data[CONF_CHILD_LOCK]])

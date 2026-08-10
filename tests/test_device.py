@@ -4,11 +4,13 @@ from time import sleep, time
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import AsyncMock, call, patch
 
-from homeassistant.const import TEMP_CELSIUS
+from homeassistant.const import UnitOfTemperature
 
 from custom_components.goldair_climate.const import (
+    API_PROTOCOL_VERSIONS,
     CONF_TYPE_DEHUMIDIFIER,
     CONF_TYPE_FAN,
+    CONF_TYPE_GCT315_HEATER,
     CONF_TYPE_GECO_HEATER,
     CONF_TYPE_GPCV_HEATER,
     CONF_TYPE_GPPH_HEATER,
@@ -18,6 +20,7 @@ from custom_components.goldair_climate.device import GoldairTuyaDevice
 from .const import (
     DEHUMIDIFIER_PAYLOAD,
     FAN_PAYLOAD,
+    GCT315_HEATER_PAYLOAD,
     GECO_HEATER_PAYLOAD,
     GPCV_HEATER_PAYLOAD,
     GPPH_HEATER_PAYLOAD,
@@ -26,7 +29,7 @@ from .const import (
 
 class TestDevice(IsolatedAsyncioTestCase):
     def setUp(self):
-        device_patcher = patch("pytuya.Device")
+        device_patcher = patch("tinytuya.Device")
         self.addCleanup(device_patcher.stop)
         self.mock_api = device_patcher.start()
 
@@ -38,9 +41,9 @@ class TestDevice(IsolatedAsyncioTestCase):
             "Some name", "some_dev_id", "some.ip.address", "some_local_key", self.hass()
         )
 
-    def test_configures_pytuya_correctly(self):
+    def test_configures_tinytuya_correctly(self):
         self.mock_api.assert_called_once_with(
-            "some_dev_id", "some.ip.address", "some_local_key", "device"
+            "some_dev_id", "some.ip.address", "some_local_key"
         )
         self.assertIs(self.subject._api, self.mock_api())
 
@@ -64,7 +67,7 @@ class TestDevice(IsolatedAsyncioTestCase):
         )
 
     def test_temperature_unit(self):
-        self.assertEqual(self.subject.temperature_unit, TEMP_CELSIUS)
+        self.assertEqual(self.subject.temperature_unit, UnitOfTemperature.CELSIUS)
 
     async def test_refreshes_state_if_no_cached_state_exists(self):
         self.subject._cached_state = {}
@@ -101,6 +104,14 @@ class TestDevice(IsolatedAsyncioTestCase):
     async def test_detects_fan_payload(self):
         self.subject._cached_state = FAN_PAYLOAD
         self.assertEqual(await self.subject.async_inferred_type(), CONF_TYPE_FAN)
+
+    async def test_detects_gct315_heater_payload(self):
+        # This payload also contains "8", which would otherwise be claimed by
+        # the fan check further down.
+        self.subject._cached_state = GCT315_HEATER_PAYLOAD
+        self.assertEqual(
+            await self.subject.async_inferred_type(), CONF_TYPE_GCT315_HEATER
+        )
 
     async def test_detection_returns_none_when_device_type_could_not_be_detected(self):
         self.subject._cached_state = {"1": False}
@@ -168,6 +179,47 @@ class TestDevice(IsolatedAsyncioTestCase):
         self.assertEqual(self.subject._api.status.call_count, 4)
         self.assertEqual(self.subject._cached_state["1"], False)
 
+    def test_refresh_retries_when_device_reports_an_error(self):
+        """tinytuya returns an "Err" payload rather than raising, so the device layer
+        has to turn that into a failure itself or the retry never fires."""
+        self.subject._api.status.side_effect = [
+            {"Err": "905", "Error": "Network Error: Device Unreachable"},
+            {"dps": {"1": False}},
+        ]
+
+        self.subject.refresh()
+
+        self.assertEqual(self.subject._api.status.call_count, 2)
+        self.assertEqual(self.subject._cached_state["1"], False)
+
+    def test_refresh_retries_when_device_returns_an_empty_response(self):
+        self.subject._api.status.side_effect = [None, {"dps": {"1": False}}]
+
+        self.subject.refresh()
+
+        self.assertEqual(self.subject._api.status.call_count, 2)
+        self.assertEqual(self.subject._cached_state["1"], False)
+
+    def test_refresh_retries_when_response_contains_no_state(self):
+        self.subject._api.status.side_effect = [
+            {"not_dps": True},
+            {"dps": {"1": False}},
+        ]
+
+        self.subject.refresh()
+
+        self.assertEqual(self.subject._api.status.call_count, 2)
+        self.assertEqual(self.subject._cached_state["1"], False)
+
+    def test_send_raises_when_device_reports_an_error(self):
+        self.subject._api.set_multiple_values.return_value = {
+            "Err": "914",
+            "Error": "Invalid JSON Response from Device",
+        }
+
+        with self.assertRaises(ConnectionError):
+            self.subject._send_properties({"1": True})
+
     def test_refresh_clears_cached_state_and_pending_updates_after_failing_four_times(
         self,
     ):
@@ -187,39 +239,33 @@ class TestDevice(IsolatedAsyncioTestCase):
         self.assertEqual(self.subject._pending_updates, {})
 
     def test_api_protocol_version_is_rotated_with_each_failure(self):
-        self.subject._api.set_version.assert_called_once_with(3.3)
+        self.subject._api.set_version.assert_called_once_with(API_PROTOCOL_VERSIONS[0])
         self.subject._api.set_version.reset_mock()
 
-        self.subject._api.status.side_effect = [
-            Exception("Error"),
-            Exception("Error"),
-            Exception("Error"),
-            Exception("Error"),
-        ]
+        self.subject._api.status.side_effect = [Exception("Error")] * 4
         self.subject.refresh()
 
+        # Every failed attempt but the last rotates onto the next version, wrapping
+        # around the end of the list.
         self.subject._api.set_version.assert_has_calls(
-            [call(3.1), call(3.3), call(3.1)]
+            [
+                call(API_PROTOCOL_VERSIONS[(i + 1) % len(API_PROTOCOL_VERSIONS)])
+                for i in range(3)
+            ]
         )
 
     def test_api_protocol_version_is_stable_once_successful(self):
-        self.subject._api.set_version.assert_called_once_with(3.3)
+        self.subject._api.set_version.assert_called_once_with(API_PROTOCOL_VERSIONS[0])
         self.subject._api.set_version.reset_mock()
 
-        self.subject._api.status.side_effect = [
-            {"dps": {"1": False}},
-            Exception("Error"),
-            Exception("Error"),
-            Exception("Error"),
-            Exception("Error"),
-            Exception("Error"),
-            Exception("Error"),
-        ]
-        self.subject.refresh()
-        self.subject.refresh()
-        self.subject.refresh()
+        self.subject._api.status.side_effect = [{"dps": {"1": False}}] + [
+            Exception("Error")
+        ] * 4
 
-        self.subject._api.set_version.assert_has_calls([call(3.1), call(3.3)])
+        self.subject.refresh()  # succeeds, pinning the working protocol version
+        self.subject.refresh()  # fails four times, but must not rotate away from it
+
+        self.subject._api.set_version.assert_not_called()
 
     def test_reset_cached_state_clears_cached_state_and_pending_updates(self):
         self.subject._cached_state = {"1": True, "updated_at": time()}
@@ -288,12 +334,10 @@ class TestDevice(IsolatedAsyncioTestCase):
             debounce.cancel.assert_called_once()
             mock.assert_called_once_with(1, self.subject._send_pending_updates)
 
-            self.subject._api.generate_payload.return_value = "payload"
             self.subject._send_pending_updates()
-            self.subject._api.generate_payload.assert_called_once_with(
-                "set", {"1": True, "2": False}
+            self.subject._api.set_multiple_values.assert_called_once_with(
+                {"1": True, "2": False}
             )
-            self.subject._api._send_receive.assert_called_once_with("payload")
 
     def test_set_properties_takes_no_action_when_no_properties_are_provided(self):
         with patch("custom_components.goldair_climate.device.Timer") as mock:

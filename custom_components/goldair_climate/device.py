@@ -5,15 +5,16 @@ API for Goldair Tuya devices.
 import json
 import logging
 from threading import Lock, Timer
-from time import sleep, time
+from time import time
 
-from homeassistant.const import TEMP_CELSIUS
+from homeassistant.const import UnitOfTemperature
 from homeassistant.core import HomeAssistant
 
 from .const import (
     API_PROTOCOL_VERSIONS,
     CONF_TYPE_DEHUMIDIFIER,
     CONF_TYPE_FAN,
+    CONF_TYPE_GCT315_HEATER,
     CONF_TYPE_GECO_HEATER,
     CONF_TYPE_GPCV_HEATER,
     CONF_TYPE_GPPH_HEATER,
@@ -33,18 +34,18 @@ class GoldairTuyaDevice(object):
             address (str): The network address.
             local_key (str): The encryption key.
         """
-        import pytuya
+        import tinytuya
 
         self._name = name
         self._api_protocol_version_index = None
         self._api_protocol_working = False
-        self._api = pytuya.Device(dev_id, address, local_key, "device")
+        self._api = tinytuya.Device(dev_id, address, local_key)
         self._refresh_task = None
         self._rotate_api_protocol_version()
 
         self._reset_cached_state()
 
-        self._TEMPERATURE_UNIT = TEMP_CELSIUS
+        self._TEMPERATURE_UNIT = UnitOfTemperature.CELSIUS
         self._hass = hass
 
         # API calls to update Goldair heaters are asynchronous and non-blocking. This means
@@ -88,6 +89,10 @@ class GoldairTuyaDevice(object):
         _LOGGER.debug(f"Inferring device type from cached state: {cached_state}")
         if "5" in cached_state and "3" not in cached_state:
             return CONF_TYPE_DEHUMIDIFIER
+        # Must precede the fan check: the GCT315 also reports "8" (oscillation).
+        # "19" (its auto-off countdown) is the only dps unique to this layout.
+        if "19" in cached_state:
+            return CONF_TYPE_GCT315_HEATER
         if "8" in cached_state:
             return CONF_TYPE_FAN
         if "106" in cached_state:
@@ -141,7 +146,10 @@ class GoldairTuyaDevice(object):
         self._pending_updates = {}
 
     def _refresh_cached_state(self):
-        new_state = self._api.status()
+        new_state = self._check_response(self._api.status())
+        if "dps" not in new_state:
+            raise ConnectionError(f"Device response contained no state: {new_state}")
+
         self._cached_state = new_state["dps"]
         self._cached_state["updated_at"] = time()
         _LOGGER.info(f"refreshed device state: {json.dumps(new_state)}")
@@ -175,18 +183,18 @@ class GoldairTuyaDevice(object):
 
     def _send_pending_updates(self):
         pending_properties = self._get_pending_properties()
-        payload = self._api.generate_payload("set", pending_properties)
 
         _LOGGER.info(f"sending dps update: {json.dumps(pending_properties)}")
 
         self._retry_on_failed_connection(
-            lambda: self._send_payload(payload), "Failed to update device state."
+            lambda: self._send_properties(pending_properties),
+            "Failed to update device state.",
         )
 
-    def _send_payload(self, payload):
+    def _send_properties(self, properties):
         try:
             self._lock.acquire()
-            self._api._send_receive(payload)
+            self._check_response(self._api.set_multiple_values(properties))
             self._cached_state["updated_at"] = 0
             now = time()
             pending_updates = self._get_pending_updates()
@@ -194,6 +202,24 @@ class GoldairTuyaDevice(object):
                 pending_updates[key]["updated_at"] = now
         finally:
             self._lock.release()
+
+    @staticmethod
+    def _check_response(response):
+        """
+        Raise on a failed device call.
+
+        tinytuya reports failures by returning a dict containing an "Err" key rather
+        than raising, so without this the retry and protocol-rotation logic in
+        _retry_on_failed_connection would never fire.
+        """
+        if not response:
+            raise ConnectionError("Received no response from device.")
+        if "Err" in response:
+            raise ConnectionError(
+                f'Device returned error {response.get("Err")}: {response.get("Error")}'
+            )
+
+        return response
 
     def _retry_on_failed_connection(self, func, error_message):
         for i in range(self._CONNECTION_ATTEMPTS):

@@ -25,6 +25,16 @@ GPCV_HEATER_PAYLOAD = {
 
 GECO_HEATER_PAYLOAD = {"1": True, "2": True, "3": 30, "4": 25, "5": 0, "6": 0}
 
+GCT315_HEATER_PAYLOAD = {
+    "1": False,
+    "2": 25,
+    "3": 19,
+    "4": "normal",
+    "5": "level_1",
+    "8": False,
+    "19": "cancel",
+}
+
 DEHUMIDIFIER_PAYLOAD = {
     "1": False,
     "2": "0",

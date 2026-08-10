@@ -1,15 +1,12 @@
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import AsyncMock, patch
 
+from homeassistant.components.climate import ClimateEntityFeature, HVACMode
 from homeassistant.components.climate.const import (
     ATTR_HVAC_MODE,
     ATTR_PRESET_MODE,
-    HVAC_MODE_HEAT,
-    HVAC_MODE_OFF,
-    SUPPORT_PRESET_MODE,
-    SUPPORT_TARGET_TEMPERATURE,
 )
-from homeassistant.const import ATTR_TEMPERATURE, STATE_UNAVAILABLE
+from homeassistant.const import ATTR_TEMPERATURE
 
 from custom_components.goldair_climate.gpcv_heater.climate import GoldairGPCVHeater
 from custom_components.goldair_climate.gpcv_heater.const import (
@@ -42,7 +39,10 @@ class TestGoldairGPCVHeater(IsolatedAsyncioTestCase):
     def test_supported_features(self):
         self.assertEqual(
             self.subject.supported_features,
-            SUPPORT_TARGET_TEMPERATURE | SUPPORT_PRESET_MODE,
+            ClimateEntityFeature.TARGET_TEMPERATURE
+            | ClimateEntityFeature.PRESET_MODE
+            | ClimateEntityFeature.TURN_ON
+            | ClimateEntityFeature.TURN_OFF,
         )
 
     def test_should_poll(self):
@@ -121,7 +121,8 @@ class TestGoldairGPCVHeater(IsolatedAsyncioTestCase):
 
     async def test_set_target_temperature_rounds_value_to_closest_integer(self):
         async with assert_device_properties_set(
-            self.subject._device, {PROPERTY_TO_DPS_ID[ATTR_TARGET_TEMPERATURE]: 25},
+            self.subject._device,
+            {PROPERTY_TO_DPS_ID[ATTR_TARGET_TEMPERATURE]: 25},
         ):
             await self.subject.async_set_target_temperature(24.6)
 
@@ -142,28 +143,35 @@ class TestGoldairGPCVHeater(IsolatedAsyncioTestCase):
 
     def test_hvac_mode(self):
         self.dps[PROPERTY_TO_DPS_ID[ATTR_HVAC_MODE]] = True
-        self.assertEqual(self.subject.hvac_mode, HVAC_MODE_HEAT)
+        self.assertEqual(self.subject.hvac_mode, HVACMode.HEAT)
 
         self.dps[PROPERTY_TO_DPS_ID[ATTR_HVAC_MODE]] = False
-        self.assertEqual(self.subject.hvac_mode, HVAC_MODE_OFF)
+        self.assertEqual(self.subject.hvac_mode, HVACMode.OFF)
 
         self.dps[PROPERTY_TO_DPS_ID[ATTR_HVAC_MODE]] = None
-        self.assertEqual(self.subject.hvac_mode, STATE_UNAVAILABLE)
+        self.assertIs(self.subject.hvac_mode, None)
+
+    def test_availability(self):
+        self.dps[PROPERTY_TO_DPS_ID[ATTR_HVAC_MODE]] = False
+        self.assertTrue(self.subject.available)
+
+        self.dps[PROPERTY_TO_DPS_ID[ATTR_HVAC_MODE]] = None
+        self.assertFalse(self.subject.available)
 
     def test_hvac_modes(self):
-        self.assertEqual(self.subject.hvac_modes, [HVAC_MODE_OFF, HVAC_MODE_HEAT])
+        self.assertEqual(self.subject.hvac_modes, [HVACMode.OFF, HVACMode.HEAT])
 
     async def test_turn_on(self):
         async with assert_device_properties_set(
             self.subject._device, {PROPERTY_TO_DPS_ID[ATTR_HVAC_MODE]: True}
         ):
-            await self.subject.async_set_hvac_mode(HVAC_MODE_HEAT)
+            await self.subject.async_set_hvac_mode(HVACMode.HEAT)
 
     async def test_turn_off(self):
         async with assert_device_properties_set(
             self.subject._device, {PROPERTY_TO_DPS_ID[ATTR_HVAC_MODE]: False}
         ):
-            await self.subject.async_set_hvac_mode(HVAC_MODE_OFF)
+            await self.subject.async_set_hvac_mode(HVACMode.OFF)
 
     def test_preset_mode(self):
         self.dps[PROPERTY_TO_DPS_ID[ATTR_PRESET_MODE]] = PRESET_MODE_TO_DPS_MODE[
@@ -203,9 +211,7 @@ class TestGoldairGPCVHeater(IsolatedAsyncioTestCase):
     def test_error_state(self):
         # There are currently no known error states; update this as they're discovered
         self.dps[PROPERTY_TO_DPS_ID[ATTR_ERROR]] = "something"
-        self.assertEqual(
-            self.subject.device_state_attributes, {ATTR_ERROR: "something"}
-        )
+        self.assertEqual(self.subject.extra_state_attributes, {ATTR_ERROR: "something"})
 
     async def test_update(self):
         result = AsyncMock()

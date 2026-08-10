@@ -1,0 +1,4 @@
+# isort and black disagree on import formatting unless isort is told to defer to it.
+# The old isort 4.x defaults happened not to clash; isort 5+ needs this explicitly.
+[tool.isort]
+profile = "black"

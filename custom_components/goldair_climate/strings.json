@@ -4,7 +4,7 @@
     "step": {
       "user": {
         "title": "Configure your Goldair climate device",
-        "description": "[Follow these instructions to find your device id and local key.](https://github.com/nikrolls/homeassistant-goldair-climate#finding-your-device-id-and-local-key)",
+        "description": "Your device ID and local key can be found using the Goldair or Tuya Smart app. See the integration documentation for instructions.",
         "data": {
           "name": "Name",
           "host": "IP address or hostname",
@@ -29,7 +29,7 @@
     "step": {
       "user": {
         "title": "Configure your Goldair climate device",
-        "description": "[Follow these instructions to find your local key.](https://github.com/nikrolls/homeassistant-goldair-climate#finding-your-device-id-and-local-key)",
+        "description": "Your local key can be found using the Goldair or Tuya Smart app. See the integration documentation for instructions.",
         "data": {
           "host": "IP address or hostname",
           "local_key": "Local key",

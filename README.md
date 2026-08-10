@@ -60,13 +60,17 @@ There was previously a sensor option, however this is easily achieved using a [t
 
 ### Device support
 
-Please note, this component is actively tested with the Goldair GPPH (inverter), GPDH420 (dehumidifier), and GCPF315 fan, and community-tested with GECO,and GPCV heater devices. It may work with the GPDH440 dehumidifier, GEPH heater, and other heaters, dehumidifiers or fans based on the Tuya platform.
+Please note, this component is actively tested with the Goldair GPPH (inverter), GPDH420 (dehumidifier), GCPF315 fan, and GCT315 ceramic tower heater, and community-tested with GECO,and GPCV heater devices. It may work with the GPDH440 dehumidifier, GEPH heater, and other heaters, dehumidifiers or fans based on the Tuya platform.
 
 GPCV support is based on feedback from etamtlosz on Issue #27. GECO support is based on work in KiLLeRRaT/homeassistant-goldair-climate and the feature set from the online manual for these heaters. GEPH heaters appear to be the same as the GECO270, so may also work with this setting. This heater is almost compatible with the GPCV but without the Low/High mode.
+
+GCT315 support (`gct315_heater`) was mapped from a DPS dump off a real 2000W ceramic tower heater. Tuya reports the same product profile for the GCT425, so that model may work with this setting too. Unlike the other heaters it oscillates, so it exposes a swing control, and its heat level is a preset of `Auto`, `Fan`, `Low` or `High` — `Auto` hands the level choice to the appliance, which picks it from the gap between the target and current temperatures. Its auto-off countdown is surfaced read-only as a `timer` attribute (`cancel`, or `1h` through `12h`); this integration can't set it. There is no child lock or display light on this model.
 
 ---
 
 ## Installation
+
+Requires Home Assistant 2025.6 or newer. (Versions of this integration before 0.2.0 depended on `pytuya`, which no longer installs on modern Python and stopped working around Home Assistant 2024.10; 0.2.0 moves to `tinytuya`.)
 
 Installation is via the [Home Assistant Community Store (HACS)](https://hacs.xyz/), which is the best place to get third-party integrations for Home Assistant. Once you have HACS set up, simply [search the `Integrations` section](https://hacs.xyz/docs/basic/getting_started) for Goldair.
 
@@ -107,7 +111,7 @@ goldair_climate:
 
 #### type
 
-&nbsp;&nbsp;&nbsp;&nbsp;_(string) (Optional)_ The type of Goldair device. `auto` to automatically detect the device type, or if that doesn't work, select from the available options `heater`, `gpcv_heater`, `geco_heater`, `dehumidifier` or `fan`.
+&nbsp;&nbsp;&nbsp;&nbsp;_(string) (Optional)_ The type of Goldair device. `auto` to automatically detect the device type, or if that doesn't work, select from the available options `heater`, `gpcv_heater`, `geco_heater`, `gct315_heater`, `dehumidifier` or `fan`.
 
 &nbsp;&nbsp;&nbsp;&nbsp;_Default value: auto_
 
