@@ -1,2 +1,1 @@
-pycryptodome~=3.9
-pytuya~=7.0
+tinytuya~=1.20

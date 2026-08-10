@@ -1,6 +1,7 @@
 """
 Setup for different kinds of Goldair climate devices
 """
+
 from . import DOMAIN
 from .const import (
     CONF_DEVICE_ID,

@@ -1,21 +1,18 @@
 """
 Goldair WiFi Fan device.
 """
-try:
-    from homeassistant.components.climate import ClimateEntity
-except ImportError:
-    from homeassistant.components.climate import ClimateDevice as ClimateEntity
 
+from homeassistant.components.climate import (
+    ClimateEntity,
+    ClimateEntityFeature,
+    HVACMode,
+)
 from homeassistant.components.climate.const import (
     ATTR_FAN_MODE,
     ATTR_HVAC_MODE,
     ATTR_PRESET_MODE,
     ATTR_SWING_MODE,
-    SUPPORT_FAN_MODE,
-    SUPPORT_PRESET_MODE,
-    SUPPORT_SWING_MODE,
 )
-from homeassistant.const import ATTR_TEMPERATURE, STATE_UNAVAILABLE
 
 from ..device import GoldairTuyaDevice
 from .const import (
@@ -26,7 +23,13 @@ from .const import (
     SWING_MODE_TO_DPS_MODE,
 )
 
-SUPPORT_FLAGS = SUPPORT_FAN_MODE | SUPPORT_PRESET_MODE | SUPPORT_SWING_MODE
+SUPPORT_FLAGS = (
+    ClimateEntityFeature.FAN_MODE
+    | ClimateEntityFeature.PRESET_MODE
+    | ClimateEntityFeature.SWING_MODE
+    | ClimateEntityFeature.TURN_ON
+    | ClimateEntityFeature.TURN_OFF
+)
 
 
 class GoldairFan(ClimateEntity):
@@ -77,6 +80,11 @@ class GoldairFan(ClimateEntity):
         return self._device.temperature_unit
 
     @property
+    def available(self):
+        """Return whether the device is currently reachable."""
+        return self._device.get_property(PROPERTY_TO_DPS_ID[ATTR_HVAC_MODE]) is not None
+
+    @property
     def hvac_mode(self):
         """Return current HVAC mode, ie Fan Only or Off."""
         dps_mode = self._device.get_property(PROPERTY_TO_DPS_ID[ATTR_HVAC_MODE])
@@ -84,7 +92,7 @@ class GoldairFan(ClimateEntity):
         if dps_mode is not None:
             return GoldairTuyaDevice.get_key_for_value(HVAC_MODE_TO_DPS_MODE, dps_mode)
         else:
-            return STATE_UNAVAILABLE
+            return None
 
     @property
     def hvac_modes(self):
@@ -97,6 +105,14 @@ class GoldairFan(ClimateEntity):
         await self._device.async_set_property(
             PROPERTY_TO_DPS_ID[ATTR_HVAC_MODE], dps_mode
         )
+
+    async def async_turn_on(self):
+        """Turn the fan on."""
+        await self.async_set_hvac_mode(HVACMode.FAN_ONLY)
+
+    async def async_turn_off(self):
+        """Turn the fan off."""
+        await self.async_set_hvac_mode(HVACMode.OFF)
 
     @property
     def preset_mode(self):

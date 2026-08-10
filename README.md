@@ -68,6 +68,8 @@ GPCV support is based on feedback from etamtlosz on Issue #27. GECO support is b
 
 ## Installation
 
+Requires Home Assistant 2025.6 or newer. (Versions of this integration before 0.2.0 depended on `pytuya`, which no longer installs on modern Python and stopped working around Home Assistant 2024.10; 0.2.0 moves to `tinytuya`.)
+
 Installation is via the [Home Assistant Community Store (HACS)](https://hacs.xyz/), which is the best place to get third-party integrations for Home Assistant. Once you have HACS set up, simply [search the `Integrations` section](https://hacs.xyz/docs/basic/getting_started) for Goldair.
 
 ## Configuration

@@ -5,6 +5,7 @@ Based on sean6541/tuya-homeassistant for service call logic, and TarxBoy's
 investigation into Goldair's tuyapi statuses
 https://github.com/codetheweb/tuyapi/issues/31.
 """
+
 import logging
 
 import homeassistant.helpers.config_validation as cv
@@ -33,7 +34,7 @@ from .device import GoldairTuyaDevice
 
 _LOGGER = logging.getLogger(__name__)
 
-VERSION = "0.1.3"
+VERSION = "0.2.0"
 
 CONFIG_SCHEMA = vol.Schema(
     {DOMAIN: vol.All(cv.ensure_list, [vol.Schema(individual_config_schema())])},
@@ -57,18 +58,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     config = {**entry.data, **entry.options, "name": entry.title}
     setup_device(hass, config)
 
+    platforms = []
     if config[CONF_CLIMATE] == True:
-        hass.async_create_task(
-            hass.config_entries.async_forward_entry_setup(entry, "climate")
-        )
+        platforms.append("climate")
     if config[CONF_DISPLAY_LIGHT] == True:
-        hass.async_create_task(
-            hass.config_entries.async_forward_entry_setup(entry, "light")
-        )
+        platforms.append("light")
     if config[CONF_CHILD_LOCK] == True:
-        hass.async_create_task(
-            hass.config_entries.async_forward_entry_setup(entry, "lock")
-        )
+        platforms.append("lock")
+
+    if platforms:
+        await hass.config_entries.async_forward_entry_setups(entry, platforms)
 
     entry.add_update_listener(async_update_entry)
 
@@ -83,12 +82,16 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
     config = entry.data
     data = hass.data[DOMAIN][config[CONF_DEVICE_ID]]
 
+    platforms = []
     if CONF_CLIMATE in data:
-        await hass.config_entries.async_forward_entry_unload(entry, "climate")
+        platforms.append("climate")
     if CONF_DISPLAY_LIGHT in data:
-        await hass.config_entries.async_forward_entry_unload(entry, "light")
+        platforms.append("light")
     if CONF_CHILD_LOCK in data:
-        await hass.config_entries.async_forward_entry_unload(entry, "lock")
+        platforms.append("lock")
+
+    if platforms:
+        await hass.config_entries.async_unload_platforms(entry, platforms)
 
     delete_device(hass, config)
     del hass.data[DOMAIN][config[CONF_DEVICE_ID]]

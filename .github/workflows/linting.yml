@@ -1,24 +1,23 @@
 name: Linting
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Setup Python
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.9
+          python-version: '3.13'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements-first.txt
           pip install -r requirements-dev.txt
       - name: isort
-        run: isort --recursive --diff
+        run: isort --check-only --diff .
       - name: Black
         run: black --check .

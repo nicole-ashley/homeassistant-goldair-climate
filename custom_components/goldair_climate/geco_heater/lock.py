@@ -1,13 +1,8 @@
 """
 Platform to control the child lock on Goldair GECO WiFi-connected heaters and panels.
 """
-try:
-    from homeassistant.components.lock import LockEntity
-except ImportError:
-    from homeassistant.components.lock import LockDevice as LockEntity
 
-from homeassistant.components.lock import STATE_LOCKED, STATE_UNLOCKED
-from homeassistant.const import STATE_UNAVAILABLE
+from homeassistant.components.lock import LockEntity
 
 from ..device import GoldairTuyaDevice
 from .const import ATTR_CHILD_LOCK, PROPERTY_TO_DPS_ID
@@ -43,12 +38,11 @@ class GoldairGECOHeaterChildLock(LockEntity):
         return self._device.device_info
 
     @property
-    def state(self):
-        """Return the current state."""
-        if self.is_locked is None:
-            return STATE_UNAVAILABLE
-        else:
-            return STATE_LOCKED if self.is_locked else STATE_UNLOCKED
+    def available(self):
+        """Return whether the device is currently reachable."""
+        return (
+            self._device.get_property(PROPERTY_TO_DPS_ID[ATTR_CHILD_LOCK]) is not None
+        )
 
     @property
     def is_locked(self):

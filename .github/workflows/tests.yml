@@ -1,36 +1,41 @@
 name: Python tests
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
   tests:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8, 3.9]
-        ha-version: [2021.1, 2021.2, 2021.3, 2021.4, 2021.5]
+        python-version: ['3.13']
+        # Home Assistant 2026.2 requires Python >= 3.13.2. Older releases still work
+        # with this integration, but installing them today pulls transitive deps
+        # (pycares, josepy) that no longer build, so they are not covered here.
+        ha-version: ['2026.1', '2026.2']
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies and Home Assistant ${{ matrix.ha-version }}.*
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements-first.txt
           pip install -r requirements-dev.txt
-          pip install homeassistant~=${{ matrix.ha-version }}.1
+          pip install "homeassistant~=${{ matrix.ha-version }}.0"
       - name: Test with pytest
         run: pytest --cov=. --cov-config=.coveragerc --cov-report xml:coverage.xml
+      # SonarCloud only runs on the upstream repo: sonar-project.properties points at
+      # the nikrolls organisation, and forks receive no SONAR_TOKEN, so running it
+      # anywhere else fails the build with "Not authorized or project not found".
       - name: Track master branch
-        if: ${{ matrix.python-version == 3.9 && matrix.ha-version == 2021.5 }}
+        if: ${{ matrix.ha-version == '2026.2' && github.repository == 'nikrolls/homeassistant-goldair-climate' }}
         run: git fetch --no-tags https://$GITHUB_ACTOR:${{ secrets.GITHUB_TOKEN }}@github.com/$GITHUB_REPOSITORY +refs/heads/master:refs/remotes/origin/master
       - name: SonarCloud scan
-        if: ${{ matrix.python-version == 3.9 && matrix.ha-version == 2021.5 }}
+        if: ${{ matrix.ha-version == '2026.2' && github.repository == 'nikrolls/homeassistant-goldair-climate' }}
         uses: sonarsource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

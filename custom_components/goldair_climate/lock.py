@@ -1,6 +1,7 @@
 """
 Setup for different kinds of Goldair climate devices
 """
+
 import logging
 
 from . import DOMAIN

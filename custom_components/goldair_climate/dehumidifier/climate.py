@@ -1,11 +1,12 @@
 """
 Goldair WiFi Dehumidifier device.
 """
-try:
-    from homeassistant.components.climate import ClimateEntity
-except ImportError:
-    from homeassistant.components.climate import ClimateDevice as ClimateEntity
 
+from homeassistant.components.climate import (
+    ClimateEntity,
+    ClimateEntityFeature,
+    HVACMode,
+)
 from homeassistant.components.climate.const import (
     ATTR_FAN_MODE,
     ATTR_HUMIDITY,
@@ -13,12 +14,8 @@ from homeassistant.components.climate.const import (
     ATTR_PRESET_MODE,
     FAN_HIGH,
     FAN_LOW,
-    HVAC_MODE_OFF,
-    SUPPORT_FAN_MODE,
-    SUPPORT_PRESET_MODE,
-    SUPPORT_TARGET_HUMIDITY,
 )
-from homeassistant.const import ATTR_TEMPERATURE, STATE_UNAVAILABLE
+from homeassistant.const import ATTR_TEMPERATURE
 
 from ..device import GoldairTuyaDevice
 from .const import (
@@ -39,7 +36,13 @@ from .const import (
     PROPERTY_TO_DPS_ID,
 )
 
-SUPPORT_FLAGS = SUPPORT_TARGET_HUMIDITY | SUPPORT_PRESET_MODE | SUPPORT_FAN_MODE
+SUPPORT_FLAGS = (
+    ClimateEntityFeature.TARGET_HUMIDITY
+    | ClimateEntityFeature.PRESET_MODE
+    | ClimateEntityFeature.FAN_MODE
+    | ClimateEntityFeature.TURN_ON
+    | ClimateEntityFeature.TURN_OFF
+)
 
 
 class GoldairDehumidifier(ClimateEntity):
@@ -90,12 +93,12 @@ class GoldairDehumidifier(ClimateEntity):
         elif self.defrosting:
             return "mdi:snowflake-melt"
         elif (
-            self.hvac_mode is not HVAC_MODE_OFF
+            self.hvac_mode is not HVACMode.OFF
             and self.preset_mode is PRESET_DRY_CLOTHES
         ):
             return "mdi:tshirt-crew-outline"
         elif (
-            self.hvac_mode is not HVAC_MODE_OFF and self.preset_mode is PRESET_AIR_CLEAN
+            self.hvac_mode is not HVACMode.OFF and self.preset_mode is PRESET_AIR_CLEAN
         ):
             return "mdi:air-purifier"
         else:
@@ -158,6 +161,11 @@ class GoldairDehumidifier(ClimateEntity):
         return self._device.get_property(PROPERTY_TO_DPS_ID[ATTR_TEMPERATURE])
 
     @property
+    def available(self):
+        """Return whether the device is currently reachable."""
+        return self._device.get_property(PROPERTY_TO_DPS_ID[ATTR_HVAC_MODE]) is not None
+
+    @property
     def hvac_mode(self):
         """Return current HVAC mode, ie Dry or Off."""
         dps_mode = self._device.get_property(PROPERTY_TO_DPS_ID[ATTR_HVAC_MODE])
@@ -165,7 +173,7 @@ class GoldairDehumidifier(ClimateEntity):
         if dps_mode is not None:
             return GoldairTuyaDevice.get_key_for_value(HVAC_MODE_TO_DPS_MODE, dps_mode)
         else:
-            return STATE_UNAVAILABLE
+            return None
 
     @property
     def hvac_modes(self):
@@ -178,6 +186,14 @@ class GoldairDehumidifier(ClimateEntity):
         await self._device.async_set_property(
             PROPERTY_TO_DPS_ID[ATTR_HVAC_MODE], dps_mode
         )
+
+    async def async_turn_on(self):
+        """Turn the dehumidifier on."""
+        await self.async_set_hvac_mode(HVACMode.DRY)
+
+    async def async_turn_off(self):
+        """Turn the dehumidifier off."""
+        await self.async_set_hvac_mode(HVACMode.OFF)
 
     @property
     def preset_mode(self):
@@ -285,7 +301,7 @@ class GoldairDehumidifier(ClimateEntity):
         return self._device.get_property(PROPERTY_TO_DPS_ID[ATTR_DEFROSTING])
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         """Get additional attributes that HA doesn't naturally support."""
         error = self._device.get_property(PROPERTY_TO_DPS_ID[ATTR_ERROR])
         if error:

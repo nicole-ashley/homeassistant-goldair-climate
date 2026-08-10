@@ -1,6 +1,7 @@
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import AsyncMock, patch
 
+from homeassistant.components.climate import ClimateEntityFeature, HVACMode
 from homeassistant.components.climate.const import (
     ATTR_FAN_MODE,
     ATTR_HUMIDITY,
@@ -8,13 +9,8 @@ from homeassistant.components.climate.const import (
     ATTR_PRESET_MODE,
     FAN_HIGH,
     FAN_LOW,
-    HVAC_MODE_DRY,
-    HVAC_MODE_OFF,
-    SUPPORT_FAN_MODE,
-    SUPPORT_PRESET_MODE,
-    SUPPORT_TARGET_HUMIDITY,
 )
-from homeassistant.const import ATTR_TEMPERATURE, STATE_UNAVAILABLE
+from homeassistant.const import ATTR_TEMPERATURE
 
 from custom_components.goldair_climate.dehumidifier.climate import GoldairDehumidifier
 from custom_components.goldair_climate.dehumidifier.const import (
@@ -55,7 +51,11 @@ class TestGoldairDehumidifier(IsolatedAsyncioTestCase):
     def test_supported_features(self):
         self.assertEqual(
             self.subject.supported_features,
-            SUPPORT_TARGET_HUMIDITY | SUPPORT_PRESET_MODE | SUPPORT_FAN_MODE,
+            ClimateEntityFeature.TARGET_HUMIDITY
+            | ClimateEntityFeature.PRESET_MODE
+            | ClimateEntityFeature.FAN_MODE
+            | ClimateEntityFeature.TURN_ON
+            | ClimateEntityFeature.TURN_OFF,
         )
 
     def test_should_poll(self):
@@ -193,7 +193,8 @@ class TestGoldairDehumidifier(IsolatedAsyncioTestCase):
         ]
 
         async with assert_device_properties_set(
-            self.subject._device, {PROPERTY_TO_DPS_ID[ATTR_TARGET_HUMIDITY]: 55},
+            self.subject._device,
+            {PROPERTY_TO_DPS_ID[ATTR_TARGET_HUMIDITY]: 55},
         ):
             await self.subject.async_set_humidity(53)
 
@@ -203,7 +204,8 @@ class TestGoldairDehumidifier(IsolatedAsyncioTestCase):
         ]
 
         async with assert_device_properties_set(
-            self.subject._device, {PROPERTY_TO_DPS_ID[ATTR_TARGET_HUMIDITY]: 50},
+            self.subject._device,
+            {PROPERTY_TO_DPS_ID[ATTR_TARGET_HUMIDITY]: 50},
         ):
             await self.subject.async_set_humidity(52)
 
@@ -266,28 +268,35 @@ class TestGoldairDehumidifier(IsolatedAsyncioTestCase):
 
     def test_hvac_mode(self):
         self.dps[PROPERTY_TO_DPS_ID[ATTR_HVAC_MODE]] = True
-        self.assertEqual(self.subject.hvac_mode, HVAC_MODE_DRY)
+        self.assertEqual(self.subject.hvac_mode, HVACMode.DRY)
 
         self.dps[PROPERTY_TO_DPS_ID[ATTR_HVAC_MODE]] = False
-        self.assertEqual(self.subject.hvac_mode, HVAC_MODE_OFF)
+        self.assertEqual(self.subject.hvac_mode, HVACMode.OFF)
 
         self.dps[PROPERTY_TO_DPS_ID[ATTR_HVAC_MODE]] = None
-        self.assertEqual(self.subject.hvac_mode, STATE_UNAVAILABLE)
+        self.assertIs(self.subject.hvac_mode, None)
+
+    def test_availability(self):
+        self.dps[PROPERTY_TO_DPS_ID[ATTR_HVAC_MODE]] = False
+        self.assertTrue(self.subject.available)
+
+        self.dps[PROPERTY_TO_DPS_ID[ATTR_HVAC_MODE]] = None
+        self.assertFalse(self.subject.available)
 
     def test_hvac_modes(self):
-        self.assertEqual(self.subject.hvac_modes, [HVAC_MODE_OFF, HVAC_MODE_DRY])
+        self.assertEqual(self.subject.hvac_modes, [HVACMode.OFF, HVACMode.DRY])
 
     async def test_turn_on(self):
         async with assert_device_properties_set(
             self.subject._device, {PROPERTY_TO_DPS_ID[ATTR_HVAC_MODE]: True}
         ):
-            await self.subject.async_set_hvac_mode(HVAC_MODE_DRY)
+            await self.subject.async_set_hvac_mode(HVACMode.DRY)
 
     async def test_turn_off(self):
         async with assert_device_properties_set(
             self.subject._device, {PROPERTY_TO_DPS_ID[ATTR_HVAC_MODE]: False}
         ):
-            await self.subject.async_set_hvac_mode(HVAC_MODE_OFF)
+            await self.subject.async_set_hvac_mode(HVACMode.OFF)
 
     def test_preset_mode(self):
         self.dps[PROPERTY_TO_DPS_ID[ATTR_PRESET_MODE]] = PRESET_MODE_TO_DPS_MODE[
@@ -547,32 +556,32 @@ class TestGoldairDehumidifier(IsolatedAsyncioTestCase):
         self.dps[PROPERTY_TO_DPS_ID[ATTR_DEFROSTING]] = True
         self.assertEqual(self.subject.defrosting, True)
 
-    def test_device_state_attributes(self):
+    def test_extra_state_attributes(self):
         self.dps[PROPERTY_TO_DPS_ID[ATTR_ERROR]] = None
         self.dps[PROPERTY_TO_DPS_ID[ATTR_DEFROSTING]] = False
         self.assertEqual(
-            self.subject.device_state_attributes,
+            self.subject.extra_state_attributes,
             {ATTR_ERROR: None, ATTR_DEFROSTING: False},
         )
 
         self.dps[PROPERTY_TO_DPS_ID[ATTR_ERROR]] = ERROR_CODE_TO_DPS_CODE[ERROR_TANK]
         self.dps[PROPERTY_TO_DPS_ID[ATTR_DEFROSTING]] = False
         self.assertEqual(
-            self.subject.device_state_attributes,
+            self.subject.extra_state_attributes,
             {ATTR_ERROR: ERROR_TANK, ATTR_DEFROSTING: False},
         )
 
         self.dps[PROPERTY_TO_DPS_ID[ATTR_ERROR]] = None
         self.dps[PROPERTY_TO_DPS_ID[ATTR_DEFROSTING]] = True
         self.assertEqual(
-            self.subject.device_state_attributes,
+            self.subject.extra_state_attributes,
             {ATTR_ERROR: None, ATTR_DEFROSTING: True},
         )
 
         self.dps[PROPERTY_TO_DPS_ID[ATTR_ERROR]] = ERROR_CODE_TO_DPS_CODE[ERROR_TANK]
         self.dps[PROPERTY_TO_DPS_ID[ATTR_DEFROSTING]] = True
         self.assertEqual(
-            self.subject.device_state_attributes,
+            self.subject.extra_state_attributes,
             {ATTR_ERROR: ERROR_TANK, ATTR_DEFROSTING: True},
         )
 

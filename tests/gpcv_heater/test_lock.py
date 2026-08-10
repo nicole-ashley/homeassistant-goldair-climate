@@ -1,8 +1,7 @@
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import AsyncMock, patch
 
-from homeassistant.components.lock import STATE_LOCKED, STATE_UNLOCKED
-from homeassistant.const import STATE_UNAVAILABLE
+from homeassistant.components.lock import LockState
 
 from custom_components.goldair_climate.gpcv_heater.const import (
     ATTR_CHILD_LOCK,
@@ -44,13 +43,17 @@ class TestGoldairGPCVHeaterChildLock(IsolatedAsyncioTestCase):
 
     def test_state(self):
         self.dps[PROPERTY_TO_DPS_ID[ATTR_CHILD_LOCK]] = True
-        self.assertEqual(self.subject.state, STATE_LOCKED)
+        self.assertEqual(self.subject.state, LockState.LOCKED)
 
         self.dps[PROPERTY_TO_DPS_ID[ATTR_CHILD_LOCK]] = False
-        self.assertEqual(self.subject.state, STATE_UNLOCKED)
+        self.assertEqual(self.subject.state, LockState.UNLOCKED)
+
+    def test_availability(self):
+        self.dps[PROPERTY_TO_DPS_ID[ATTR_CHILD_LOCK]] = False
+        self.assertTrue(self.subject.available)
 
         self.dps[PROPERTY_TO_DPS_ID[ATTR_CHILD_LOCK]] = None
-        self.assertEqual(self.subject.state, STATE_UNAVAILABLE)
+        self.assertFalse(self.subject.available)
 
     def test_is_locked(self):
         self.dps[PROPERTY_TO_DPS_ID[ATTR_CHILD_LOCK]] = True

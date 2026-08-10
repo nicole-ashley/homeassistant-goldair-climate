@@ -1,9 +1,5 @@
-from homeassistant.components.climate.const import (
-    ATTR_HVAC_MODE,
-    ATTR_PRESET_MODE,
-    HVAC_MODE_HEAT,
-    HVAC_MODE_OFF,
-)
+from homeassistant.components.climate import HVACMode
+from homeassistant.components.climate.const import ATTR_HVAC_MODE, ATTR_PRESET_MODE
 from homeassistant.const import ATTR_TEMPERATURE
 
 ATTR_TARGET_TEMPERATURE = "target_temperature"
@@ -33,7 +29,7 @@ PROPERTY_TO_DPS_ID = {
     ATTR_ECO_TARGET_TEMPERATURE: "106",
 }
 
-HVAC_MODE_TO_DPS_MODE = {HVAC_MODE_OFF: False, HVAC_MODE_HEAT: True}
+HVAC_MODE_TO_DPS_MODE = {HVACMode.OFF: False, HVACMode.HEAT: True}
 PRESET_MODE_TO_DPS_MODE = {
     STATE_COMFORT: "C",
     STATE_ECO: "ECO",
