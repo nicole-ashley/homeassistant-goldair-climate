@@ -7,7 +7,7 @@ import logging
 from threading import Lock, Timer
 from time import sleep, time
 
-from homeassistant.const import TEMP_CELSIUS
+from homeassistant.const import UnitOfTemperature
 from homeassistant.core import HomeAssistant
 
 from .const import (
@@ -44,7 +44,7 @@ class GoldairTuyaDevice(object):
 
         self._reset_cached_state()
 
-        self._TEMPERATURE_UNIT = TEMP_CELSIUS
+        self._TEMPERATURE_UNIT = UnitOfTemperature.CELSIUS
         self._hass = hass
 
         # API calls to update Goldair heaters are asynchronous and non-blocking. This means

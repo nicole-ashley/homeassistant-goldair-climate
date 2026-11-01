@@ -11,11 +11,9 @@ from homeassistant.components.climate.const import (
     ATTR_HVAC_MODE,
     ATTR_PRESET_MODE,
     ATTR_SWING_MODE,
-    SUPPORT_FAN_MODE,
-    SUPPORT_PRESET_MODE,
-    SUPPORT_SWING_MODE,
+    ClimateEntityFeature,
 )
-from homeassistant.const import ATTR_TEMPERATURE, STATE_UNAVAILABLE
+from homeassistant.const import ATTR_TEMPERATURE
 
 from ..device import GoldairTuyaDevice
 from .const import (
@@ -26,7 +24,13 @@ from .const import (
     SWING_MODE_TO_DPS_MODE,
 )
 
-SUPPORT_FLAGS = SUPPORT_FAN_MODE | SUPPORT_PRESET_MODE | SUPPORT_SWING_MODE
+SUPPORT_FLAGS = (
+    ClimateEntityFeature.FAN_MODE
+    | ClimateEntityFeature.PRESET_MODE
+    | ClimateEntityFeature.SWING_MODE
+    | ClimateEntityFeature.TURN_ON
+    | ClimateEntityFeature.TURN_OFF
+)
 
 
 class GoldairFan(ClimateEntity):
@@ -84,7 +88,7 @@ class GoldairFan(ClimateEntity):
         if dps_mode is not None:
             return GoldairTuyaDevice.get_key_for_value(HVAC_MODE_TO_DPS_MODE, dps_mode)
         else:
-            return STATE_UNAVAILABLE
+            return None
 
     @property
     def hvac_modes(self):

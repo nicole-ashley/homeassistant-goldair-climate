@@ -6,7 +6,7 @@ try:
 except ImportError:
     from homeassistant.components.lock import LockDevice as LockEntity
 
-from homeassistant.components.lock import STATE_LOCKED, STATE_UNLOCKED
+from homeassistant.components.lock import LockState
 from homeassistant.const import STATE_UNAVAILABLE
 
 from ..device import GoldairTuyaDevice
@@ -48,7 +48,7 @@ class GoldairDehumidifierChildLock(LockEntity):
         if self.is_locked is None:
             return STATE_UNAVAILABLE
         else:
-            return STATE_LOCKED if self.is_locked else STATE_UNLOCKED
+            return LockState.LOCKED if self.is_locked else LockState.UNLOCKED
 
     @property
     def is_locked(self):

@@ -1,8 +1,7 @@
 from homeassistant.components.climate.const import (
     ATTR_HVAC_MODE,
     ATTR_PRESET_MODE,
-    HVAC_MODE_HEAT,
-    HVAC_MODE_OFF,
+    HVACMode,
 )
 from homeassistant.const import ATTR_TEMPERATURE
 
@@ -18,4 +17,4 @@ PROPERTY_TO_DPS_ID = {
     ATTR_ERROR: "6",
 }
 
-HVAC_MODE_TO_DPS_MODE = {HVAC_MODE_OFF: False, HVAC_MODE_HEAT: True}
+HVAC_MODE_TO_DPS_MODE = {HVACMode.OFF: False, HVACMode.HEAT: True}
