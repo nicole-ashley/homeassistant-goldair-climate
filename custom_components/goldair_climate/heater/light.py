@@ -6,7 +6,8 @@ try:
 except ImportError:
     from homeassistant.components.light import Light as LightEntity
 
-from homeassistant.components.climate import ATTR_HVAC_MODE, HVAC_MODE_OFF
+from homeassistant.components.climate import ATTR_HVAC_MODE, HVACMode
+from homeassistant.components.light import ColorMode
 from homeassistant.const import STATE_UNAVAILABLE
 
 from ..device import GoldairTuyaDevice
@@ -15,6 +16,9 @@ from .const import ATTR_DISPLAY_ON, HVAC_MODE_TO_DPS_MODE, PROPERTY_TO_DPS_ID
 
 class GoldairHeaterLedDisplayLight(LightEntity):
     """Representation of a Goldair WiFi-connected heater LED display."""
+
+    _attr_color_mode = ColorMode.ONOFF
+    _attr_supported_color_modes = {ColorMode.ONOFF}
 
     def __init__(self, device):
         """Initialize the light.
@@ -67,7 +71,7 @@ class GoldairHeaterLedDisplayLight(LightEntity):
         dps_hvac_mode = self._device.get_property(PROPERTY_TO_DPS_ID[ATTR_HVAC_MODE])
         dps_display_on = self._device.get_property(PROPERTY_TO_DPS_ID[ATTR_DISPLAY_ON])
 
-        if dps_hvac_mode != HVAC_MODE_TO_DPS_MODE[HVAC_MODE_OFF]:
+        if dps_hvac_mode != HVAC_MODE_TO_DPS_MODE[HVACMode.OFF]:
             await (
                 self.async_turn_on() if not dps_display_on else self.async_turn_off()
             )

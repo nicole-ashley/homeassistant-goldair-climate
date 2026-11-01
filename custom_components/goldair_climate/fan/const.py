@@ -3,12 +3,11 @@ from homeassistant.components.climate.const import (
     ATTR_HVAC_MODE,
     ATTR_PRESET_MODE,
     ATTR_SWING_MODE,
-    HVAC_MODE_FAN_ONLY,
-    HVAC_MODE_OFF,
     PRESET_ECO,
     PRESET_SLEEP,
     SWING_HORIZONTAL,
     SWING_OFF,
+    HVACMode,
 )
 
 ATTR_TARGET_TEMPERATURE = "target_temperature"
@@ -24,7 +23,7 @@ PROPERTY_TO_DPS_ID = {
     ATTR_DISPLAY_ON: "101",
 }
 
-HVAC_MODE_TO_DPS_MODE = {HVAC_MODE_OFF: False, HVAC_MODE_FAN_ONLY: True}
+HVAC_MODE_TO_DPS_MODE = {HVACMode.OFF: False, HVACMode.FAN_ONLY: True}
 PRESET_MODE_TO_DPS_MODE = {
     PRESET_NORMAL: "normal",
     PRESET_ECO: "nature",

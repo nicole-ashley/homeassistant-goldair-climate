@@ -8,10 +8,10 @@ except ImportError:
 
 from homeassistant.components.climate.const import (
     ATTR_HVAC_MODE,
-    HVAC_MODE_HEAT,
-    SUPPORT_TARGET_TEMPERATURE,
+    ClimateEntityFeature,
+    HVACMode,
 )
-from homeassistant.const import ATTR_TEMPERATURE, STATE_UNAVAILABLE
+from homeassistant.const import ATTR_TEMPERATURE
 
 from ..device import GoldairTuyaDevice
 from .const import (
@@ -21,7 +21,11 @@ from .const import (
     PROPERTY_TO_DPS_ID,
 )
 
-SUPPORT_FLAGS = SUPPORT_TARGET_TEMPERATURE
+SUPPORT_FLAGS = (
+    ClimateEntityFeature.TARGET_TEMPERATURE
+    | ClimateEntityFeature.TURN_ON
+    | ClimateEntityFeature.TURN_OFF
+)
 
 
 class GoldairGECOHeater(ClimateEntity):
@@ -68,7 +72,7 @@ class GoldairGECOHeater(ClimateEntity):
         """Return the icon to use in the frontend for this device."""
         hvac_mode = self.hvac_mode
 
-        if hvac_mode == HVAC_MODE_HEAT:
+        if hvac_mode == HVACMode.HEAT:
             return "mdi:radiator"
         else:
             return "mdi:radiator-disabled"
@@ -130,7 +134,7 @@ class GoldairGECOHeater(ClimateEntity):
         if dps_mode is not None:
             return GoldairTuyaDevice.get_key_for_value(HVAC_MODE_TO_DPS_MODE, dps_mode)
         else:
-            return STATE_UNAVAILABLE
+            return None
 
     @property
     def hvac_modes(self):
@@ -145,7 +149,7 @@ class GoldairGECOHeater(ClimateEntity):
         )
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         """Get additional attributes that HA doesn't naturally support."""
         error = self._device.get_property(PROPERTY_TO_DPS_ID[ATTR_ERROR])
 
